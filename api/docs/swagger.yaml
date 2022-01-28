@@ -1,0 +1,66 @@
+basePath: /v1
+definitions:
+  types.HealthCheckInfo:
+    properties:
+      appName:
+        type: string
+      appVersion:
+        type: string
+      clusterName:
+        type: string
+      git:
+        $ref: '#/definitions/types.HealthCheckInfoGit'
+    type: object
+  types.HealthCheckInfoGit:
+    properties:
+      hash:
+        type: string
+      ref:
+        type: string
+      url:
+        type: string
+    type: object
+  types.HealthCheckPing:
+    properties:
+      ping:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: go-sso
+  title: Swagger go-sso
+  version: develop
+paths:
+  /healthcheck/info:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: bidBucket health checker info
+      operationId: health-check-info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.HealthCheckInfo'
+      summary: bidBucket health checker info
+      tags:
+      - healthcheck
+  /healthcheck/ping:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: bidBucket health checker ping
+      operationId: health-check-ping
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.HealthCheckPing'
+      summary: bidBucket health checker ping
+      tags:
+      - healthcheck
+swagger: "2.0"

@@ -1,0 +1,101 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "go-sso",
+        "title": "Swagger go-sso",
+        "contact": {},
+        "version": "develop"
+    },
+    "basePath": "/v1",
+    "paths": {
+        "/healthcheck/info": {
+            "get": {
+                "description": "bidBucket health checker info",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthcheck"
+                ],
+                "summary": "bidBucket health checker info",
+                "operationId": "health-check-info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.HealthCheckInfo"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthcheck/ping": {
+            "get": {
+                "description": "bidBucket health checker ping",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthcheck"
+                ],
+                "summary": "bidBucket health checker ping",
+                "operationId": "health-check-ping",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.HealthCheckPing"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "types.HealthCheckInfo": {
+            "type": "object",
+            "properties": {
+                "appName": {
+                    "type": "string"
+                },
+                "appVersion": {
+                    "type": "string"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "git": {
+                    "$ref": "#/definitions/types.HealthCheckInfoGit"
+                }
+            }
+        },
+        "types.HealthCheckInfoGit": {
+            "type": "object",
+            "properties": {
+                "hash": {
+                    "type": "string"
+                },
+                "ref": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.HealthCheckPing": {
+            "type": "object",
+            "properties": {
+                "ping": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

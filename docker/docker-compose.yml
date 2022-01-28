@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mysqldb:
+    container_name: 'go-sso-mysql'
+    image: 'mysql:5.7'
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: go-sso-example
+    volumes:
+      - ../var/data:/data/db
+    ports:
+      - '3306:3306'
+    networks:
+      - thrive_net
+  application:
+    container_name: 'go-sso'
+    restart: unless-stopped
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../var/log:/app/log
+    ports:
+      - '8080:8080'
+    depends_on:
+      - mysqldb
+    networks:
+      - thrive_net
+    environment:
+      MONGO_CONNECTION_URL: "mongodb://mongodb"
+
+networks:
+  thrive_net:
+    driver: bridge

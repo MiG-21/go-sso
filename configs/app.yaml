@@ -1,0 +1,25 @@
+port: 8080
+sso_private_key_path: "./test/key_pair/demo.rsa"
+debug: false
+frontend:
+  path: "/app/web"
+  index: "index.html"
+logger:
+  path: ""
+  level: ""
+http:
+  read_buffer_size: 16384
+  write_buffer_size: 16384
+  read_timeout: 18
+  write_timeout: 18
+  idle_timeout: 60
+  request_timeout: 5
+mysql:
+  dsn: ""
+  max_lifetime: ""
+  max_open_conns: ""
+  max_idle_conns: ""
+cookie:
+  cookie_name: ""
+  cookie_domain: ""
+  cookie_valid_hours: ""
