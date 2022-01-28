@@ -1,5 +1,6 @@
 port: 8080
-sso_private_key_path: "./test/key_pair/demo.rsa"
+private_key_path: "./test/key_pair/demo.rsa"
+public_key_path: "./test/key_pair/demo.rsa.pub"
 debug: false
 frontend:
   path: "/app/web"
@@ -15,11 +16,11 @@ http:
   idle_timeout: 60
   request_timeout: 5
 mysql:
-  dsn: ""
-  max_lifetime: ""
-  max_open_conns: ""
-  max_idle_conns: ""
+  dsn: "sso:sso@tcp(127.0.0.1:3306)/sso?charset=utf8"
+  max_lifetime: 20
+  max_open_conns: 100
+  max_idle_conns: 100
 cookie:
-  cookie_name: ""
-  cookie_domain: ""
-  cookie_valid_hours: ""
+  cookie_name: "SSO_C"
+  cookie_domain: "localhost"
+  cookie_valid_hours: 20

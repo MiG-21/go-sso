@@ -1,5 +1,22 @@
 basePath: /v1
 definitions:
+  fiber.Error:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  types.AuthRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
   types.HealthCheckInfo:
     properties:
       appName:
@@ -25,12 +42,96 @@ definitions:
       ping:
         type: string
     type: object
+  types.UserCreateRequest:
+    properties:
+      confirm_password:
+        type: string
+      email:
+        type: string
+      gender:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - confirm_password
+    - email
+    - gender
+    - name
+    - password
+    type: object
+  types.UserCreateResponse:
+    type: object
+  types.UserInfoResponse:
+    properties:
+      active:
+        type: boolean
+      created:
+        type: integer
+      data:
+        type: string
+      email:
+        type: string
+      gender:
+        type: string
+      id:
+        type: integer
+      locked:
+        type: boolean
+      locked_to:
+        type: integer
+      name:
+        type: string
+      updated:
+        type: integer
+    type: object
+  types.UserTokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
 info:
   contact: {}
   description: go-sso
   title: Swagger go-sso
   version: develop
 paths:
+  /auth_token:
+    post:
+      consumes:
+      - application/json
+      description: auth token
+      operationId: auth-token
+      parameters:
+      - description: request body
+        in: body
+        name: params
+        required: true
+        schema:
+          $ref: '#/definitions/types.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.UserTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: auth token
+      tags:
+      - sso
   /healthcheck/info:
     get:
       consumes:
@@ -63,4 +164,112 @@ paths:
       summary: bidBucket health checker ping
       tags:
       - healthcheck
+  /logout:
+    get:
+      consumes:
+      - application/json
+      description: logout user
+      operationId: logout-user
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Done
+          schema:
+            type: string
+      summary: logout user
+      tags:
+      - sso
+  /sso:
+    post:
+      consumes:
+      - application/json
+      description: auth cookie
+      operationId: auth-cookie
+      parameters:
+      - description: request body
+        in: body
+        name: params
+        required: true
+        schema:
+          $ref: '#/definitions/types.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Done
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: auth cookie
+      tags:
+      - sso
+  /user/me:
+    post:
+      consumes:
+      - application/json
+      description: user info
+      operationId: user-info
+      parameters:
+      - description: bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: user info
+      tags:
+      - user
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: register user
+      operationId: register-user
+      parameters:
+      - description: request body
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/types.UserCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.UserCreateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: register user
+      tags:
+      - user
 swagger: "2.0"

@@ -73,9 +73,11 @@ func SetupServer(p InitServerParams) *fiber.App {
 
 	userGroup := versionGroup.Group("user")
 	userGroup.Post("/register", handlers.RegisterHandler(p.Sso, p.Validator))
-	userGroup.Post("/lock", handlers.UserInfoHandler(p.Sso, p.Validator))
-	userGroup.Post("/me", handlers.UserInfoHandler(p.Sso, p.Validator))
-	userGroup.Post("/verify", handlers.UserInfoHandler(p.Sso, p.Validator))
+	userGroup.Post("/me", handlers.Authenticate(), handlers.UserInfoHandler(p.Sso))
+	userGroup.Post("/verify", handlers.UserInfoHandler(p.Sso))
+
+	adminGroup := versionGroup.Group("admin")
+	adminGroup.Post("/lock", handlers.UserInfoHandler(p.Sso), handlers.Authenticate())
 
 	app.Get("/swagger/*", swagger.HandlerDefault) // default
 

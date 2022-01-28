@@ -25,6 +25,7 @@ type (
 		Debug          bool   `yaml:"debug"`
 		Port           int    `yaml:"port" env-default:"8080"`
 		PrivateKeyPath string `yaml:"private_key_path"`
+		PublicKeyPath  string `yaml:"public_key_path"`
 		Statics        string `yaml:"statics" env:"APP_STATIC_PATH"`
 
 		Logger   ConfigLogger   `yaml:"logger"`

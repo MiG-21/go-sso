@@ -11,11 +11,12 @@ import (
 )
 
 var PrivateKey *rsa.PrivateKey
+var PublicKey *rsa.PublicKey
 
 type (
 	// SSOer is what it needs to be implemented for sso functionality.
 	SSOer interface {
-		Login(string, string) (*StoreUser, error)
+		UserManager() UserManager
 		// CTValidHours returns the cookie/jwt token validity in hours.
 		CTValidHours() int64
 		CookieName() string
@@ -85,6 +86,15 @@ func SetupSSO(config *internal.Config) (*SSO, error) {
 		return nil, err
 	}
 	PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM(privateKeyData)
+	if err != nil {
+		return nil, err
+	}
+
+	publicKeyData, err := ioutil.ReadFile(config.PublicKeyPath)
+	if err != nil {
+		return nil, err
+	}
+	PublicKey, err = jwt.ParseRSAPublicKeyFromPEM(publicKeyData)
 	if err != nil {
 		return nil, err
 	}
