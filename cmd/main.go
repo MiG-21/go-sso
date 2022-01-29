@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/MiG-21/go-sso/internal/sso/dao"
 	"log"
 
 	"github.com/MiG-21/go-sso/internal"
+	"github.com/MiG-21/go-sso/internal/event"
+	"github.com/MiG-21/go-sso/internal/mail"
+	"github.com/MiG-21/go-sso/internal/sso/dao"
 	"github.com/MiG-21/go-sso/internal/web"
 	"go.uber.org/dig"
 )
@@ -18,9 +20,11 @@ func main() {
 
 	wrapError(c.Provide(internal.SetupValidator))
 	wrapError(c.Provide(internal.SetupConfig))
+	wrapError(c.Provide(event.SetupEventService))
 	wrapError(c.Provide(internal.SetupLogger))
 	wrapError(c.Provide(dao.SetupMysqlDao))
 	wrapError(c.Provide(web.SetupServer))
+	wrapError(c.Provide(mail.SetupService))
 
 	if err := c.Invoke(internal.Bootstrap); err != nil {
 		log.Fatal(err)

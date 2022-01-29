@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/MiG-21/go-sso/internal"
+	"github.com/MiG-21/go-sso/internal/event"
 	"github.com/MiG-21/go-sso/internal/sso"
 	"github.com/MiG-21/go-sso/internal/web/handlers"
 	swagger "github.com/arsmn/fiber-swagger/v2"
@@ -23,10 +24,11 @@ type (
 	InitServerParams struct {
 		dig.In
 
-		Config    *internal.Config
-		Logger    *zerolog.Logger
-		Validator *internal.ServiceValidator
-		Sso       sso.SSOer
+		Config       *internal.Config
+		Logger       *zerolog.Logger
+		Validator    *internal.ServiceValidator
+		Sso          sso.SSOer
+		EventService *event.Service
 	}
 )
 
@@ -72,12 +74,12 @@ func SetupServer(p InitServerParams) *fiber.App {
 	versionGroup.Post("/auth_token", handlers.AuthTokenHandler(p.Sso, p.Validator))
 
 	userGroup := versionGroup.Group("user")
-	userGroup.Post("/register", handlers.RegisterHandler(p.Sso, p.Validator))
-	userGroup.Post("/me", handlers.Authenticate(), handlers.UserInfoHandler(p.Sso))
-	userGroup.Post("/verify", handlers.UserInfoHandler(p.Sso))
+	userGroup.Post("/register", handlers.RegisterHandler(p.Config, p.Sso, p.Validator, p.EventService))
+	userGroup.Post("/me", handlers.Authenticate(p.Config), handlers.UserInfoHandler(p.Sso))
+	userGroup.Get("/verification", handlers.VerificationHandler(p.Config, p.Sso, p.Validator, p.EventService))
 
 	adminGroup := versionGroup.Group("admin")
-	adminGroup.Post("/lock", handlers.UserInfoHandler(p.Sso), handlers.Authenticate())
+	adminGroup.Post("/lock", handlers.UserInfoHandler(p.Sso), handlers.Authenticate(p.Config))
 
 	app.Get("/swagger/*", swagger.HandlerDefault) // default
 

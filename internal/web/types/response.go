@@ -6,6 +6,8 @@ type (
 	}
 
 	UserCreateResponse struct {
+		Name  string `json:"name"`
+		Email string `json:"email"`
 	}
 
 	UserInfoResponse struct {

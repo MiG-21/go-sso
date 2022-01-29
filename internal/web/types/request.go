@@ -13,4 +13,8 @@ type (
 		ConfirmPassword string `json:"confirm_password" form:"confirm_password" validate:"required"`
 		Gender          string `json:"gender" form:"gender" validate:"required"`
 	}
+
+	UserVerificationRequest struct {
+		Token string `query:"token" validate:"required"`
+	}
 )

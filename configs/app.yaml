@@ -16,7 +16,7 @@ http:
   idle_timeout: 60
   request_timeout: 5
 mysql:
-  dsn: "sso:sso@tcp(127.0.0.1:3306)/sso?charset=utf8"
+  dsn: ""
   max_lifetime: 20
   max_open_conns: 100
   max_idle_conns: 100
@@ -24,3 +24,9 @@ cookie:
   cookie_name: "SSO_C"
   cookie_domain: "localhost"
   cookie_valid_hours: 20
+smtp:
+  smtp_user: ""
+  smtp_password: ""
+  smtp_host: ""
+  smtp_port: 465
+  smtp_ssl: true

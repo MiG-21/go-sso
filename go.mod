@@ -10,6 +10,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/goccy/go-json v0.9.4
 	github.com/gofiber/fiber/v2 v2.25.0
+	github.com/google/uuid v1.3.0
 	github.com/ilyakaznacheev/cleanenv v1.2.6
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.16.0

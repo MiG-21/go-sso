@@ -1,17 +1,11 @@
 package sso
 
 import (
-	"crypto/rsa"
-	"io/ioutil"
 	"time"
 
 	"github.com/MiG-21/go-sso/internal"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 )
-
-var PrivateKey *rsa.PrivateKey
-var PublicKey *rsa.PublicKey
 
 type (
 	// SSOer is what it needs to be implemented for sso functionality.
@@ -32,12 +26,13 @@ type (
 	}
 
 	SSO struct {
+		Crypto *internal.ConfigCrypto
 		Cookie *internal.ConfigCookie
 	}
 )
 
 func (sso SSO) BuildJWTToken(id int64, roles []string, exp time.Time) (string, error) {
-	return GenJWT(id, roles, PrivateKey, exp.Unix())
+	return internal.GenSignInJWT(id, roles, sso.Crypto.PrivateKey, exp.Unix())
 }
 
 func (sso SSO) CTValidHours() int64 {
@@ -80,24 +75,6 @@ func (sso SSO) Logout(exp time.Time) *fiber.Cookie {
 	return c
 }
 
-func SetupSSO(config *internal.Config) (*SSO, error) {
-	privateKeyData, err := ioutil.ReadFile(config.PrivateKeyPath)
-	if err != nil {
-		return nil, err
-	}
-	PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM(privateKeyData)
-	if err != nil {
-		return nil, err
-	}
-
-	publicKeyData, err := ioutil.ReadFile(config.PublicKeyPath)
-	if err != nil {
-		return nil, err
-	}
-	PublicKey, err = jwt.ParseRSAPublicKeyFromPEM(publicKeyData)
-	if err != nil {
-		return nil, err
-	}
-
-	return &SSO{&config.Cookie}, nil
+func SetupSSO(config *internal.Config) *SSO {
+	return &SSO{&config.Crypto, &config.Cookie}
 }

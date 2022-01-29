@@ -1,13 +1,12 @@
 package dao
 
 import (
+	"database/sql"
 	"errors"
 	"io"
 	"os"
 	"time"
 
-	"database/sql"
-	"github.com/MiG-21/go-sso/internal"
 	"github.com/MiG-21/go-sso/internal/sso"
 	"github.com/go-gorp/gorp/v3"
 	_ "github.com/go-sql-driver/mysql"
@@ -81,6 +80,28 @@ func (s *UserStore) Create(user *sso.UserModel) error {
 	return s.db.Insert(user)
 }
 
+func (s *UserStore) Update(user *sso.UserModel) error {
+	query := "UPDATE `users` SET `name`=?, `gender`=?, `data`=?, `updated_at`=? WHERE id=? LIMIT 1"
+	_, err := s.db.Exec(query, user.Name, user.Gender, user.Data, user.Updated, user.Id)
+	if err != nil && err == sql.ErrNoRows {
+		return nil
+	}
+	return err
+}
+
+func (s *UserStore) Verify(code string) (bool, error) {
+	query := "UPDATE `users` SET `active`=1, `verification_code`='', `updated_at`=? WHERE `verification_code`=? LIMIT 1"
+	_, err := s.db.Exec(query, time.Now().Unix(), code)
+	switch err {
+	case sql.ErrNoRows:
+		return false, nil
+	case nil:
+		return true, nil
+	default:
+		return false, err
+	}
+}
+
 func setupUserStore(db *sql.DB, gcInterval int) (*UserStore, error) {
 	store := &UserStore{
 		Store{
@@ -97,6 +118,7 @@ func setupUserStore(db *sql.DB, gcInterval int) (*UserStore, error) {
 
 	table := store.db.AddTableWithName(sso.UserModel{}, store.tableName)
 	table.AddIndex("idx_login", "Btree", []string{"email", "password"})
+	table.AddIndex("idx_verification", "Btree", []string{"verification_code"})
 
 	if err := store.db.CreateTablesIfNotExists(); err != nil {
 		return nil, err
@@ -105,29 +127,4 @@ func setupUserStore(db *sql.DB, gcInterval int) (*UserStore, error) {
 	_ = store.db.CreateIndex()
 
 	return store, nil
-}
-
-func SetupMysqlDao(config *internal.Config) (sso.SSOer, error) {
-	s, err := sso.SetupSSO(config)
-	if err != nil {
-		return nil, err
-	}
-
-	db, err := sql.Open("mysql", config.Mysql.Dsn)
-	if err != nil {
-		return nil, err
-	}
-	db.SetMaxOpenConns(config.Mysql.MaxOpenConns)
-	db.SetMaxIdleConns(config.Mysql.MaxIdleConns)
-	db.SetConnMaxLifetime(time.Duration(config.Mysql.MaxLifetime) * time.Second)
-
-	uStore, err := setupUserStore(db, 10)
-	if err != nil {
-		return nil, err
-	}
-
-	return &MysqlDao{
-		SSO:       s,
-		UserStore: uStore,
-	}, nil
 }

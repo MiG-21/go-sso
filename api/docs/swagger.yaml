@@ -62,6 +62,11 @@ definitions:
     - password
     type: object
   types.UserCreateResponse:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
     type: object
   types.UserInfoResponse:
     properties:
@@ -230,12 +235,16 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/types.UserInfoResponse'
-        "400":
-          description: Bad Request
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/fiber.Error'
         "422":
           description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/fiber.Error'
       summary: user info
@@ -257,19 +266,48 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/types.UserCreateResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/fiber.Error'
         "422":
           description: Unprocessable Entity
           schema:
             $ref: '#/definitions/fiber.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fiber.Error'
       summary: register user
+      tags:
+      - user
+  /user/verification:
+    get:
+      consumes:
+      - application/json
+      description: verify user
+      operationId: verify-user
+      parameters:
+      - in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Done
+          schema:
+            type: string
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: verify user
       tags:
       - user
 swagger: "2.0"

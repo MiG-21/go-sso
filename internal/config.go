@@ -1,10 +1,14 @@
 package internal
 
 import (
+	"crypto/rsa"
+	"io/ioutil"
 	"os"
 	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/ilyakaznacheev/cleanenv"
+	"go.uber.org/dig"
 )
 
 var (
@@ -26,13 +30,14 @@ type (
 		Port           int    `yaml:"port" env-default:"8080"`
 		PrivateKeyPath string `yaml:"private_key_path"`
 		PublicKeyPath  string `yaml:"public_key_path"`
-		Statics        string `yaml:"statics" env:"APP_STATIC_PATH"`
 
 		Logger   ConfigLogger   `yaml:"logger"`
 		Http     ConfigHttp     `yaml:"http"`
 		Frontend ConfigFrontend `yaml:"frontend"`
 		Mysql    ConfigMysql    `yaml:"mysql"`
 		Cookie   ConfigCookie   `yaml:"cookie"`
+		Smtp     ConfigSmtp     `yaml:"smtp"`
+		Crypto   ConfigCrypto
 	}
 
 	ConfigLogger struct {
@@ -55,7 +60,7 @@ type (
 	}
 
 	ConfigMysql struct {
-		Dsn          string `yaml:"dsn" env:"APP_MYSQL_DSN" env-default:"sso:sso@tcp(127.0.0.1:3306)/sso?charset=utf8"`
+		Dsn          string `yaml:"dsn" env:"APP_MYSQL_DSN"`
 		MaxLifetime  int    `yaml:"max_lifetime" env:"APP_MYSQL_MAX_LIFETIME" env-default:"20"`
 		MaxOpenConns int    `yaml:"max_open_conns" env:"APP_MYSQL_MAX_OPEN_CONNS" env-default:"100"`
 		MaxIdleConns int    `yaml:"max_idle_conns" env:"APP_MYSQL_MAX_IDLE_CONNS" env-default:"100"`
@@ -66,9 +71,30 @@ type (
 		Domain     string `yaml:"cookie_domain" env:"APP_COOKIE_DOMAIN" env-default:"127.0.0.1"`
 		ValidHours int64  `yaml:"cookie_valid_hours" env:"APP_VALID_HOURS" env-default:"20"`
 	}
+
+	ConfigSmtp struct {
+		SmtpUser     string `yaml:"smtp_user" env:"APP_SMTP_USER"`
+		SmtpPassword string `yaml:"smtp_password" env:"APP_SMTP_PASSWORD"`
+		SmtpHost     string `yaml:"smtp_host" env:"APP_SMTP_HOST"`
+		SmtpPort     int    `yaml:"smtp_port" env:"APP_SMTP_PORT"`
+		SmtpSsl      bool   `yaml:"smtp_ssl" env:"APP_SMTP_SSL"`
+	}
+
+	ConfigCrypto struct {
+		PrivateKey *rsa.PrivateKey
+		PublicKey  *rsa.PublicKey
+	}
+
+	SetupConfigResult struct {
+		dig.Out
+
+		Config *Config
+		Error  error `group:"errors"`
+	}
 )
 
-func SetupConfig() (*Config, error) {
+func SetupConfig() SetupConfigResult {
+	sr := SetupConfigResult{}
 	env := os.Getenv("APP_ENV")
 	cfgPath := strings.TrimRight(os.Getenv("APP_CONFIG_PATH"), "/")
 	files := []string{cfgPath + "/app.yaml"}
@@ -88,9 +114,38 @@ func SetupConfig() (*Config, error) {
 	for i := 0; i < len(files); i++ {
 		err := cleanenv.ReadConfig(files[i], config)
 		if err != nil {
-			return nil, err
+			sr.Error = err
+			return sr
 		}
 	}
 
-	return config, nil
+	privateKeyData, err := ioutil.ReadFile(config.PrivateKeyPath)
+	if err != nil {
+		sr.Error = err
+		return sr
+	}
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyData)
+	if err != nil {
+		sr.Error = err
+		return sr
+	}
+
+	publicKeyData, err := ioutil.ReadFile(config.PublicKeyPath)
+	if err != nil {
+		sr.Error = err
+		return sr
+	}
+	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKeyData)
+	if err != nil {
+		sr.Error = err
+		return sr
+	}
+
+	config.Crypto = ConfigCrypto{
+		PrivateKey: privateKey,
+		PublicKey:  publicKey,
+	}
+
+	sr.Config = config
+	return sr
 }
