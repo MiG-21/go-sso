@@ -41,7 +41,7 @@ func (u UserModel) GetVerificationUrl(ctx *fiber.Ctx, p *rsa.PrivateKey) (*url.U
 	vUrl := &url.URL{}
 	vUrl.Scheme = ctx.Protocol()
 	vUrl.Host = ctx.Hostname()
-	vUrl.Path = "v1/user/verification"
+	vUrl.Path = "/verification"
 	exp := time.Now().Add(time.Hour * time.Duration(24)).UTC()
 	token, err := internal.GenVerificationJWT(u.Code, p, exp.Unix())
 	if err != nil {

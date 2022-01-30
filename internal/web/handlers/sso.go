@@ -9,6 +9,7 @@ import (
 	"github.com/MiG-21/go-sso/internal/models"
 	"github.com/MiG-21/go-sso/internal/web/types"
 	"github.com/MiG-21/go-sso/internal/web/views"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -138,5 +139,55 @@ func LogoutHandler(s models.SSOer, validator *internal.ServiceValidator) func(ct
 		cookie := s.Logout(exp, app.Domain)
 		ctx.Cookie(cookie)
 		return ctx.Redirect("/login", fiber.StatusFound)
+	}
+}
+
+func VerificationHandler(config *internal.Config, s models.SSOer, validator *internal.ServiceValidator) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		params := &types.UserVerificationRequest{}
+		if err := ctx.QueryParser(params); err != nil {
+			data := views.ErrorViewData(fiber.StatusBadRequest, err.Error())
+			return ctx.Render("error", data, "layout")
+		}
+
+		validationErrors := HandleValidation(validator.Validate(params))
+		if validationErrors != nil {
+			data := views.ErrorViewData(fiber.StatusUnprocessableEntity, validationErrors[0].Error())
+			return ctx.Render("error", data, "layout")
+		}
+
+		parsedToken, err := jwt.ParseWithClaims(params.Token, &internal.VerificationClaims{}, func(token *jwt.Token) (interface{}, error) {
+			// since we only use the one private key to sign the tokens,
+			// we also only use its public counterpart to verify
+			return config.Crypto.PublicKey, nil
+		})
+		if err != nil {
+			data := views.ErrorViewData(fiber.StatusBadRequest, err.Error())
+			return ctx.Render("error", data, "layout")
+		}
+
+		claims, ok := parsedToken.Claims.(*internal.VerificationClaims)
+		if !ok || !parsedToken.Valid {
+			data := views.ErrorViewData(fiber.StatusBadRequest, "invalid verification token")
+			return ctx.Render("error", data, "layout")
+		}
+
+		ok, err = s.UserManager().Verify(claims.Id)
+		if err != nil {
+			data := views.ErrorViewData(fiber.StatusBadRequest, err.Error())
+			return ctx.Render("error", data, "layout")
+		}
+		if !ok {
+			data := views.ErrorViewData(fiber.StatusBadRequest, "invalid verification token")
+			return ctx.Render("error", data, "layout")
+		}
+
+		return ctx.Redirect("/verified", fiber.StatusFound)
+	}
+}
+
+func VerifiedHandler() func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		return ctx.Render("verified", nil, "layout")
 	}
 }

@@ -73,7 +73,10 @@ func SetupServer(p InitServerParams) *fiber.App {
 	app.Get("/login", handlers.LoginFormHandler(p.Validator))
 	app.Post("/login", handlers.AuthCookieHandler(p.Sso, p.Validator))
 	app.Get("/logout", handlers.LogoutHandler(p.Sso, p.Validator))
+	app.Get("/verification", handlers.VerificationHandler(p.Config, p.Sso, p.Validator))
+	app.Get("/verified", handlers.VerifiedHandler())
 
+	// API routes
 	versionGroup := app.Group("v1")
 
 	healthGroup := versionGroup.Group("healthcheck")
@@ -82,15 +85,17 @@ func SetupServer(p InitServerParams) *fiber.App {
 
 	versionGroup.Post("/auth_token", handlers.AuthTokenHandler(p.Sso, p.Validator))
 
+	// user routes
 	userGroup := versionGroup.Group("user")
 	userGroup.Post("/register", handlers.CreateUserHandler(p.Config, p.Sso, p.Validator, p.EventService))
 	userGroup.Post("/me", handlers.Authenticate(p.Config), handlers.UserInfoHandler(p.Sso))
-	userGroup.Get("/verification", handlers.VerificationHandler(p.Config, p.Sso, p.Validator, p.EventService))
 
+	// application routes
 	appGroup := versionGroup.Group("application", handlers.Authenticate(p.Config, "admin"))
 	appGroup.Post("/create", handlers.CreateApplicationHandler(p.Sso, p.Validator))
 
-	app.Get("/swagger/*", swagger.HandlerDefault) // default
+	// swagger
+	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	return app
 }

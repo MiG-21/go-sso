@@ -7,7 +7,6 @@ import (
 	"github.com/MiG-21/go-sso/internal/event"
 	"github.com/MiG-21/go-sso/internal/models"
 	"github.com/MiG-21/go-sso/internal/web/types"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -113,55 +112,5 @@ func CreateUserHandler(config *internal.Config, s models.SSOer, validator *inter
 			Email: user.Email,
 		}
 		return ctx.Status(fiber.StatusCreated).JSON(out)
-	}
-}
-
-// VerificationHandler godoc
-// @Summary verify user
-// @Description verify user
-// @Id verify-user
-// @Tags user
-// @Param token query types.UserVerificationRequest true "request query"
-// @Accept json
-// @Produce json
-// @Success 302 {string} string "Done"
-// @Failure 422 {object} fiber.Error
-// @Failure 500 {object} fiber.Error
-// @Router /user/verification [get]
-func VerificationHandler(config *internal.Config, s models.SSOer, validator *internal.ServiceValidator, eventService *event.Service) func(ctx *fiber.Ctx) error {
-	return func(ctx *fiber.Ctx) error {
-		params := &types.UserVerificationRequest{}
-		if err := ctx.QueryParser(params); err != nil {
-			return HttpError(ctx, fiber.StatusBadRequest, err)
-		}
-
-		errors := HandleValidation(validator.Validate(params))
-		if errors != nil {
-			return HttpError(ctx, fiber.StatusUnprocessableEntity, errors)
-		}
-
-		parsedToken, err := jwt.ParseWithClaims(params.Token, &internal.VerificationClaims{}, func(token *jwt.Token) (interface{}, error) {
-			// since we only use the one private key to sign the tokens,
-			// we also only use its public counterpart to verify
-			return config.Crypto.PublicKey, nil
-		})
-		if err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
-		}
-
-		claims, ok := parsedToken.Claims.(*internal.VerificationClaims)
-		if !ok || !parsedToken.Valid {
-			return fiber.NewError(fiber.StatusBadRequest, "invalid verification token")
-		}
-
-		ok, err = s.UserManager().Verify(claims.Id)
-		if err != nil {
-			return HttpError(ctx, fiber.StatusInternalServerError, err)
-		}
-		if !ok {
-			return fiber.NewError(fiber.StatusBadRequest, "user not found")
-		}
-
-		return ctx.Redirect("Done", fiber.StatusFound)
 	}
 }
