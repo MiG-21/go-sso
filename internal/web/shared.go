@@ -1,17 +1,19 @@
 package web
 
 import (
+	"strings"
 	"time"
 
 	"github.com/MiG-21/go-sso/internal"
 	"github.com/MiG-21/go-sso/internal/event"
-	"github.com/MiG-21/go-sso/internal/sso"
+	"github.com/MiG-21/go-sso/internal/models"
 	"github.com/MiG-21/go-sso/internal/web/handlers"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	goJson "github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/gofiber/template/html"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 
@@ -27,13 +29,18 @@ type (
 		Config       *internal.Config
 		Logger       *zerolog.Logger
 		Validator    *internal.ServiceValidator
-		Sso          sso.SSOer
+		Sso          models.SSOer
 		EventService *event.Service
 	}
 )
 
 func SetupServer(p InitServerParams) *fiber.App {
+	htmlPath := strings.TrimRight(p.Config.Frontend.Path, "/") + "/template/sso/"
+	engine := html.New(htmlPath, ".html")
+	engine.Reload(true)
+
 	app := fiber.New(fiber.Config{
+		Views:           engine,
 		AppName:         p.Config.AppName,
 		ReadBufferSize:  p.Config.Http.ReadBufferSize, // Make sure these are big enough.
 		WriteBufferSize: p.Config.Http.WriteBufferSize,
@@ -63,23 +70,25 @@ func SetupServer(p InitServerParams) *fiber.App {
 		MaxAge:        3600,
 	})
 
+	app.Get("/login", handlers.LoginFormHandler(p.Validator))
+	app.Post("/login", handlers.AuthCookieHandler(p.Sso, p.Validator))
+	app.Get("/logout", handlers.LogoutHandler(p.Sso, p.Validator))
+
 	versionGroup := app.Group("v1")
 
 	healthGroup := versionGroup.Group("healthcheck")
 	healthGroup.Get("/ping", handlers.HealthPingHandler)
 	healthGroup.Get("/info", handlers.HealthInfoHandler(p.Config))
 
-	versionGroup.Post("/sso", handlers.AuthCookieHandler(p.Sso, p.Validator))
-	versionGroup.Get("/logout", handlers.LogoutHandler(p.Sso))
 	versionGroup.Post("/auth_token", handlers.AuthTokenHandler(p.Sso, p.Validator))
 
 	userGroup := versionGroup.Group("user")
-	userGroup.Post("/register", handlers.RegisterHandler(p.Config, p.Sso, p.Validator, p.EventService))
+	userGroup.Post("/register", handlers.CreateUserHandler(p.Config, p.Sso, p.Validator, p.EventService))
 	userGroup.Post("/me", handlers.Authenticate(p.Config), handlers.UserInfoHandler(p.Sso))
 	userGroup.Get("/verification", handlers.VerificationHandler(p.Config, p.Sso, p.Validator, p.EventService))
 
-	adminGroup := versionGroup.Group("admin")
-	adminGroup.Post("/lock", handlers.UserInfoHandler(p.Sso), handlers.Authenticate(p.Config))
+	appGroup := versionGroup.Group("application", handlers.Authenticate(p.Config, "admin"))
+	appGroup.Post("/create", handlers.CreateApplicationHandler(p.Sso, p.Validator))
 
 	app.Get("/swagger/*", swagger.HandlerDefault) // default
 

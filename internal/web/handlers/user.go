@@ -5,7 +5,7 @@ import (
 
 	"github.com/MiG-21/go-sso/internal"
 	"github.com/MiG-21/go-sso/internal/event"
-	"github.com/MiG-21/go-sso/internal/sso"
+	"github.com/MiG-21/go-sso/internal/models"
 	"github.com/MiG-21/go-sso/internal/web/types"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
@@ -17,15 +17,15 @@ import (
 // @Description user info
 // @Id user-info
 // @Tags user
-// @Param Authorization header string true "bearer token"
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "bearer token"
 // @Success 200 {object} types.UserInfoResponse
 // @Failure 404 {object} fiber.Error
 // @Failure 422 {object} fiber.Error
 // @Failure 500 {object} fiber.Error
 // @Router /user/me [post]
-func UserInfoHandler(s sso.SSOer) func(ctx *fiber.Ctx) error {
+func UserInfoHandler(s models.SSOer) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		ctx.Set("Content-Type", "application/json")
 		claims := CtxClaims(ctx)
@@ -52,7 +52,7 @@ func UserInfoHandler(s sso.SSOer) func(ctx *fiber.Ctx) error {
 	}
 }
 
-// RegisterHandler godoc
+// CreateUserHandler godoc
 // @Summary register user
 // @Description register user
 // @Id register-user
@@ -64,7 +64,7 @@ func UserInfoHandler(s sso.SSOer) func(ctx *fiber.Ctx) error {
 // @Failure 422 {object} fiber.Error
 // @Failure 500 {object} fiber.Error
 // @Router /user/register [post]
-func RegisterHandler(config *internal.Config, s sso.SSOer, validator *internal.ServiceValidator, eventService *event.Service) func(ctx *fiber.Ctx) error {
+func CreateUserHandler(config *internal.Config, s models.SSOer, validator *internal.ServiceValidator, eventService *event.Service) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		params := &types.UserCreateRequest{}
 		if err := ctx.BodyParser(params); err != nil {
@@ -79,7 +79,7 @@ func RegisterHandler(config *internal.Config, s sso.SSOer, validator *internal.S
 		if err != nil {
 			return HttpError(ctx, fiber.StatusInternalServerError, errors)
 		}
-		user := &sso.UserModel{
+		user := &models.UserModel{
 			Name:     params.Name,
 			Email:    params.Email,
 			Password: internal.GetPasswordHash([]byte(params.Password)),
@@ -128,7 +128,7 @@ func RegisterHandler(config *internal.Config, s sso.SSOer, validator *internal.S
 // @Failure 422 {object} fiber.Error
 // @Failure 500 {object} fiber.Error
 // @Router /user/verification [get]
-func VerificationHandler(config *internal.Config, s sso.SSOer, validator *internal.ServiceValidator, eventService *event.Service) func(ctx *fiber.Ctx) error {
+func VerificationHandler(config *internal.Config, s models.SSOer, validator *internal.ServiceValidator, eventService *event.Service) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		params := &types.UserVerificationRequest{}
 		if err := ctx.QueryParser(params); err != nil {

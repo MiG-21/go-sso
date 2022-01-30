@@ -1,4 +1,4 @@
-package sso
+package models
 
 import (
 	"crypto/rsa"
@@ -10,14 +10,14 @@ import (
 )
 
 type (
-	// UserModel data item
 	UserModel struct {
 		Id        int64  `db:"id,primarykey,autoincrement"`
 		Name      string `db:"name,size:255"`
-		Email     string `db:"email,primarykey,size:255"`
+		Email     string `db:"email,size:255"`
 		Password  string `db:"password,size:100"`
 		Gender    string `db:"gender,size:50"`
 		Data      string `db:"data,size:2048"`
+		Role      string `db:"role,size:100"`
 		Active    bool   `db:"active"`
 		Locked    bool   `db:"locked"`
 		LockedTo  int64  `db:"locked_to"`
@@ -30,7 +30,7 @@ type (
 	UserManager interface {
 		Authenticate(string, string) (*UserModel, error)
 		Create(*UserModel) error
-		Update(*UserModel) error
+		Update(*UserModel) (int64, error)
 		Validate(*UserModel) error
 		ById(int64) (*UserModel, error)
 		Verify(string) (bool, error)

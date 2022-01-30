@@ -4,9 +4,9 @@ import (
 	"log"
 
 	"github.com/MiG-21/go-sso/internal"
+	"github.com/MiG-21/go-sso/internal/dao"
 	"github.com/MiG-21/go-sso/internal/event"
 	"github.com/MiG-21/go-sso/internal/mail"
-	"github.com/MiG-21/go-sso/internal/sso/dao"
 	"github.com/MiG-21/go-sso/internal/web"
 	"go.uber.org/dig"
 )

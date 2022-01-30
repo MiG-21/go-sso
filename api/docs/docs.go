@@ -23,6 +23,60 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/application/create": {
+            "post": {
+                "description": "create application",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "application"
+                ],
+                "summary": "create application",
+                "operationId": "create-application",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "request body",
+                        "name": "application",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.ApplicationCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/types.ApplicationCreateResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/auth_token": {
             "post": {
                 "description": "auth token",
@@ -119,77 +173,6 @@ var doc = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/types.HealthCheckPing"
-                        }
-                    }
-                }
-            }
-        },
-        "/logout": {
-            "get": {
-                "description": "logout user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sso"
-                ],
-                "summary": "logout user",
-                "operationId": "logout-user",
-                "responses": {
-                    "302": {
-                        "description": "Done",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/sso": {
-            "post": {
-                "description": "auth cookie",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sso"
-                ],
-                "summary": "auth cookie",
-                "operationId": "auth-cookie",
-                "parameters": [
-                    {
-                        "description": "request body",
-                        "name": "params",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/types.AuthRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "302": {
-                        "description": "Done",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Error"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Error"
                         }
                     }
                 }
@@ -350,6 +333,37 @@ var doc = `{
                 }
             }
         },
+        "types.ApplicationCreateRequest": {
+            "type": "object",
+            "properties": {
+                "application": {
+                    "type": "string"
+                },
+                "domain": {
+                    "type": "string"
+                },
+                "redirect_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.ApplicationCreateResponse": {
+            "type": "object",
+            "properties": {
+                "application": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "domain": {
+                    "type": "string"
+                },
+                "redirect_url": {
+                    "type": "string"
+                }
+            }
+        },
         "types.AuthRequest": {
             "type": "object",
             "required": [
@@ -407,6 +421,7 @@ var doc = `{
         "types.UserCreateRequest": {
             "type": "object",
             "required": [
+                "agreement",
                 "confirm_password",
                 "email",
                 "gender",
@@ -414,6 +429,9 @@ var doc = `{
                 "password"
             ],
             "properties": {
+                "agreement": {
+                    "type": "boolean"
+                },
                 "confirm_password": {
                     "type": "string"
                 },

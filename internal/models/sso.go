@@ -1,4 +1,4 @@
-package sso
+package models
 
 import (
 	"time"
@@ -11,6 +11,7 @@ type (
 	// SSOer is what it needs to be implemented for sso functionality.
 	SSOer interface {
 		UserManager() UserManager
+		ApplicationManager() ApplicationManager
 		// CTValidHours returns the cookie/jwt token validity in hours.
 		CTValidHours() int64
 		CookieName() string
@@ -20,9 +21,9 @@ type (
 		BuildJWTToken(int64, []string, time.Time) (string, error)
 		// BuildCookie takes the jwt token and returns a cookie and sets the expiration time of the same to that of
 		// the second arg.
-		BuildCookie(string, time.Time) *fiber.Cookie
+		BuildCookie(string, time.Time, string) *fiber.Cookie
 		// Logout sets the expiration time of the cookie in the past rendering it unusable.
-		Logout(time.Time) *fiber.Cookie
+		Logout(time.Time, string) *fiber.Cookie
 	}
 
 	SSO struct {
@@ -47,11 +48,11 @@ func (sso SSO) CookieDomain() string {
 	return sso.Cookie.Domain
 }
 
-func (sso SSO) BuildCookie(s string, exp time.Time) *fiber.Cookie {
+func (sso SSO) BuildCookie(value string, exp time.Time, domain string) *fiber.Cookie {
 	c := &fiber.Cookie{
 		Name:     sso.Cookie.Name,
-		Value:    s,
-		Domain:   sso.Cookie.Domain,
+		Value:    value,
+		Domain:   domain,
 		Path:     "/",
 		Expires:  exp,
 		MaxAge:   int(sso.Cookie.ValidHours * 3600),
@@ -61,11 +62,11 @@ func (sso SSO) BuildCookie(s string, exp time.Time) *fiber.Cookie {
 	return c
 }
 
-func (sso SSO) Logout(exp time.Time) *fiber.Cookie {
+func (sso SSO) Logout(exp time.Time, domain string) *fiber.Cookie {
 	c := &fiber.Cookie{
 		Name:     sso.Cookie.Name,
 		Value:    "",
-		Domain:   sso.Cookie.Domain,
+		Domain:   domain,
 		Path:     "/",
 		Expires:  exp,
 		MaxAge:   -1,

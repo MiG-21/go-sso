@@ -19,6 +19,18 @@ type (
 	}
 )
 
+func (sic *SignInClaims) IsAuthorized(roles ...string) bool {
+	if len(roles) == 0 {
+		return true
+	}
+	for _, role := range roles {
+		if ok, _ := InArray(role, sic.Roles); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func GenSignInJWT(id int64, roles []string, p *rsa.PrivateKey, t int64) (string, error) {
 	claims := SignInClaims{
 		id,

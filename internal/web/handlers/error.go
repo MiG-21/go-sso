@@ -1,17 +1,23 @@
 package handlers
 
 import (
+	"fmt"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
 type (
-	ErrorResponse struct {
-		FailedField string
-		Tag         string
-		Value       string
+	ValidationError struct {
+		Field string
+		Tag   string
+		Value string
 	}
 )
+
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("%s %s", e.Field, e.Tag)
+}
 
 func HttpError(ctx *fiber.Ctx, status int, data interface{}) error {
 	if ctx.Context() == nil {
@@ -25,12 +31,12 @@ func HttpError(ctx *fiber.Ctx, status int, data interface{}) error {
 	}
 }
 
-func HandleValidation(errs error) []*ErrorResponse {
-	var errors []*ErrorResponse
+func HandleValidation(errs error) []*ValidationError {
+	var errors []*ValidationError
 	if errs != nil {
 		for _, err := range errs.(validator.ValidationErrors) {
-			var element ErrorResponse
-			element.FailedField = err.StructNamespace()
+			var element ValidationError
+			element.Field = err.StructNamespace()
 			element.Tag = err.Tag()
 			element.Value = err.Param()
 			errors = append(errors, &element)

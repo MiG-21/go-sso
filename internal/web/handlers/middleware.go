@@ -21,7 +21,7 @@ func CtxClaims(ctx *fiber.Ctx) *internal.SignInClaims {
 	return nil
 }
 
-func Authenticate(config *internal.Config) fiber.Handler {
+func Authenticate(config *internal.Config, roles ...string) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		tokenString := ctx.Get("Authorization")
 		if tokenString == "" {
@@ -39,9 +39,13 @@ func Authenticate(config *internal.Config) fiber.Handler {
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 		}
 		if claims, ok := parsedToken.Claims.(*internal.SignInClaims); ok && parsedToken.Valid {
-			ctx.Locals(ctxUserIdKey, claims)
+			if claims.IsAuthorized(roles...) {
+				ctx.Locals(ctxUserIdKey, claims)
+			} else {
+				return fiber.NewError(fiber.StatusUnauthorized, "you are unauthorized to perform this action")
+			}
 		} else {
-			return fiber.NewError(fiber.StatusUnauthorized, "invalid token")
+			return fiber.NewError(fiber.StatusBadRequest, "invalid token")
 		}
 		return ctx.Next()
 	}

@@ -22,4 +22,11 @@ type (
 		Locked   bool   `json:"locked"`
 		LockedTo int64  `json:"locked_to"`
 	}
+
+	ApplicationCreateResponse struct {
+		Application string `json:"application"`
+		Domain      string `json:"domain"`
+		RedirectUrl string `json:"redirect_url"`
+		Code        string `json:"code"`
+	}
 )

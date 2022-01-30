@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"strings"
 	"syscall"
 	"time"
 
@@ -50,7 +49,7 @@ func SetupLogger(config *Config) *zerolog.Logger {
 
 	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
 	output.FormatLevel = func(i interface{}) string {
-		return strings.ToUpper(fmt.Sprintf("| %-6s|", i))
+		return fmt.Sprintf("| %-6s|", i)
 	}
 	output.FormatMessage = func(i interface{}) string {
 		if i != nil {
@@ -62,7 +61,7 @@ func SetupLogger(config *Config) *zerolog.Logger {
 		return fmt.Sprintf("%s:", i)
 	}
 	output.FormatFieldValue = func(i interface{}) string {
-		return strings.ToUpper(fmt.Sprintf("%s", i))
+		return fmt.Sprintf("%s", i)
 	}
 
 	l := zerolog.New(output).With().Timestamp().Logger()
