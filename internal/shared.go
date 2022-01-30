@@ -2,18 +2,16 @@ package internal
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"os/signal"
-	"runtime"
-	"syscall"
-	"time"
-
 	"github.com/MiG-21/go-sso/internal/event"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
+	"log"
+	"os"
+	"os/signal"
+	"runtime"
+	"syscall"
 )
 
 type (
@@ -40,40 +38,12 @@ func SetupValidator() *ServiceValidator {
 	return &ServiceValidator{Validator: validator.New()}
 }
 
-func SetupLogger(config *Config) *zerolog.Logger {
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	if config.Debug {
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	}
-	zerolog.TimestampFieldName = "T"
-
-	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
-	output.FormatLevel = func(i interface{}) string {
-		return fmt.Sprintf("| %-6s|", i)
-	}
-	output.FormatMessage = func(i interface{}) string {
-		if i != nil {
-			return fmt.Sprintf("***%s***", i)
-		}
-		return "--"
-	}
-	output.FormatFieldName = func(i interface{}) string {
-		return fmt.Sprintf("%s:", i)
-	}
-	output.FormatFieldValue = func(i interface{}) string {
-		return fmt.Sprintf("%s", i)
-	}
-
-	l := zerolog.New(output).With().Timestamp().Logger()
-	return &l
-}
-
 func Bootstrap(p AppRuntimeParams) {
 	terminate := false
 	for _, err := range p.Errors {
 		if err != nil {
 			if p.Logger != nil {
-				p.Logger.Err(err)
+				p.Logger.Err(err).Send()
 			} else {
 				log.Print(err)
 			}
@@ -87,16 +57,16 @@ func Bootstrap(p AppRuntimeParams) {
 	defer func() {
 		// shutdown events loop
 		if err := p.EventService.Shutdown(); err != nil {
-			p.Logger.Err(err)
+			p.Logger.Err(err).Send()
 		}
 		// shutdown app
 		if err := p.App.Shutdown(); err != nil {
-			p.Logger.Err(err)
+			p.Logger.Err(err).Send()
 		}
 	}()
 
 	if err := p.EventService.Listen(); err != nil {
-		p.Logger.Fatal().Err(err)
+		p.Logger.Fatal().Err(err).Send()
 	}
 
 	go func() {
@@ -112,7 +82,7 @@ func Bootstrap(p AppRuntimeParams) {
 			Msg("Starting server...")
 
 		if err := p.App.Listen(fmt.Sprintf(":%d", p.Config.Port)); err != nil {
-			p.Logger.Fatal().Err(err)
+			p.Logger.Fatal().Err(err).Send()
 		}
 	}()
 

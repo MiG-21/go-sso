@@ -20,16 +20,14 @@ var (
 
 type (
 	Config struct {
-		Env            string
-		AppName        string
-		GitHash        string
-		GitBranch      string
-		GitUrl         string
-		Version        string
-		Debug          bool   `yaml:"debug"`
-		Port           int    `yaml:"port" env-default:"8080"`
-		PrivateKeyPath string `yaml:"private_key_path"`
-		PublicKeyPath  string `yaml:"public_key_path"`
+		Env       string
+		AppName   string
+		GitHash   string
+		GitBranch string
+		GitUrl    string
+		Version   string
+		Debug     bool `yaml:"debug"`
+		Port      int  `yaml:"port" env-default:"8080"`
 
 		Logger   ConfigLogger   `yaml:"logger"`
 		Http     ConfigHttp     `yaml:"http"`
@@ -37,7 +35,7 @@ type (
 		Mysql    ConfigMysql    `yaml:"mysql"`
 		Cookie   ConfigCookie   `yaml:"cookie"`
 		Smtp     ConfigSmtp     `yaml:"smtp"`
-		Crypto   ConfigCrypto
+		Crypto   ConfigCrypto   `yaml:"crypto"`
 	}
 
 	ConfigLogger struct {
@@ -81,8 +79,10 @@ type (
 	}
 
 	ConfigCrypto struct {
-		PrivateKey *rsa.PrivateKey
-		PublicKey  *rsa.PublicKey
+		PrivateKeyPath string `yaml:"private_key_path" env:"APP_PRIVATE_KEY_PATH"`
+		PublicKeyPath  string `yaml:"public_key_path" env:"APP_PUBLIC_KEY_PATH"`
+		PrivateKey     *rsa.PrivateKey
+		PublicKey      *rsa.PublicKey
 	}
 
 	SetupConfigResult struct {
@@ -119,7 +119,7 @@ func SetupConfig() SetupConfigResult {
 		}
 	}
 
-	privateKeyData, err := ioutil.ReadFile(config.PrivateKeyPath)
+	privateKeyData, err := ioutil.ReadFile(config.Crypto.PrivateKeyPath)
 	if err != nil {
 		sr.Error = err
 		return sr
@@ -130,7 +130,7 @@ func SetupConfig() SetupConfigResult {
 		return sr
 	}
 
-	publicKeyData, err := ioutil.ReadFile(config.PublicKeyPath)
+	publicKeyData, err := ioutil.ReadFile(config.Crypto.PublicKeyPath)
 	if err != nil {
 		sr.Error = err
 		return sr
@@ -141,10 +141,8 @@ func SetupConfig() SetupConfigResult {
 		return sr
 	}
 
-	config.Crypto = ConfigCrypto{
-		PrivateKey: privateKey,
-		PublicKey:  publicKey,
-	}
+	config.Crypto.PrivateKey = privateKey
+	config.Crypto.PublicKey = publicKey
 
 	sr.Config = config
 	return sr

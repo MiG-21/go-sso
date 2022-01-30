@@ -1,13 +1,14 @@
 port: 8080
-private_key_path: "./test/key_pair/demo.rsa"
-public_key_path: "./test/key_pair/demo.rsa.pub"
 debug: false
+crypto:
+  private_key_path: "/app/test/key_pair/demo.rsa"
+  public_key_path: "/app/test/key_pair/demo.rsa.pub"
 frontend:
   path: "/app/web"
   index: "index.html"
 logger:
   path: ""
-  level: ""
+  level: "info"
 http:
   read_buffer_size: 16384
   write_buffer_size: 16384
