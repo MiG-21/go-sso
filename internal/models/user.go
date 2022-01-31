@@ -9,6 +9,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+const (
+	UserActionActivation      = "activation"
+	UserActionPasswordRecover = "password_recover"
+)
+
 type (
 	UserModel struct {
 		Id        int64  `db:"id,primarykey,autoincrement"`
@@ -30,20 +35,22 @@ type (
 	UserManager interface {
 		Authenticate(string, string) (*UserModel, error)
 		Create(*UserModel) error
+		Delete(*UserModel) error
 		Update(*UserModel) (int64, error)
 		Validate(*UserModel) error
 		ById(int64) (*UserModel, error)
-		Verify(string) (bool, error)
+		ByEmail(string) (*UserModel, error)
+		ByCode(string) (*UserModel, error)
 	}
 )
 
-func (u UserModel) GetVerificationUrl(ctx *fiber.Ctx, p *rsa.PrivateKey) (*url.URL, error) {
+func (u UserModel) GetActionUrl(ctx *fiber.Ctx, path, action string, p *rsa.PrivateKey) (*url.URL, error) {
 	vUrl := &url.URL{}
 	vUrl.Scheme = ctx.Protocol()
 	vUrl.Host = ctx.Hostname()
-	vUrl.Path = "/verification"
+	vUrl.Path = path
 	exp := time.Now().Add(time.Hour * time.Duration(24)).UTC()
-	token, err := internal.GenVerificationJWT(u.Code, p, exp.Unix())
+	token, err := internal.GenVerificationJWT(u.Code, action, p, exp.Unix())
 	if err != nil {
 		return nil, err
 	}

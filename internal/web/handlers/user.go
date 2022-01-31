@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"time"
-
 	"github.com/MiG-21/go-sso/internal"
 	"github.com/MiG-21/go-sso/internal/event"
 	"github.com/MiG-21/go-sso/internal/models"
@@ -85,7 +83,6 @@ func CreateUserHandler(config *internal.Config, s models.SSOer, validator *inter
 			Gender:   params.Gender,
 			Active:   false,
 			Locked:   false,
-			Created:  time.Now().Unix(),
 			Code:     rand.String(),
 		}
 		if err = s.UserManager().Validate(user); err != nil {
@@ -95,7 +92,7 @@ func CreateUserHandler(config *internal.Config, s models.SSOer, validator *inter
 			return HttpError(ctx, fiber.StatusInternalServerError, err)
 		}
 
-		vUrl, err := user.GetVerificationUrl(ctx, config.Crypto.PrivateKey)
+		vUrl, err := user.GetActionUrl(ctx, "/verification", models.UserActionActivation, config.Crypto.PrivateKey)
 		if err != nil {
 			return HttpError(ctx, fiber.StatusInternalServerError, err)
 		}

@@ -11,6 +11,16 @@ type (
 		Code string `query:"code" validate:"required"`
 	}
 
+	PasswordRecoverRequest struct {
+		Email string `json:"email" form:"email" validate:"required"`
+	}
+
+	PasswordChangeRequest struct {
+		Password        string `json:"password" form:"password" validate:"required,eqfield=ConfirmPassword"`
+		ConfirmPassword string `json:"confirm_password" form:"confirm_password" validate:"required"`
+		Code            string `json:"code" form:"code" validate:"required"`
+	}
+
 	UserCreateRequest struct {
 		Name            string `json:"name" form:"name" validate:"required"`
 		Email           string `json:"email" form:"email" validate:"required,email"`
@@ -25,8 +35,8 @@ type (
 	}
 
 	ApplicationCreateRequest struct {
-		Application string `json:"application"`
-		Domain      string `json:"domain"`
-		RedirectUrl string `json:"redirect_url" validate:"url"`
+		Application string `json:"application" validate:"required"`
+		Domain      string `json:"domain" validate:"required"`
+		RedirectUrl string `json:"redirect_url" validate:"required,url"`
 	}
 )

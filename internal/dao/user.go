@@ -3,6 +3,7 @@ package dao
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -28,8 +29,18 @@ func (u *UserStore) ById(id int64) (*models.UserModel, error) {
 	return item.(*models.UserModel), nil
 }
 
+func (u *UserStore) ByEmail(email string) (*models.UserModel, error) {
+	query := fmt.Sprintf("SELECT * FROM `%s` WHERE `email`=? LIMIT 1", u.tableName)
+	return u.selectOne(query, email)
+}
+
+func (u *UserStore) ByCode(code string) (*models.UserModel, error) {
+	query := fmt.Sprintf("SELECT * FROM `%s` WHERE `verification_code`=? LIMIT 1", u.tableName)
+	return u.selectOne(query, code)
+}
+
 func (u *UserStore) Validate(user *models.UserModel) error {
-	query := "SELECT COUNT(*) FROM `users` WHERE `email`=?"
+	query := fmt.Sprintf("SELECT COUNT(*) FROM `%s` WHERE `email`=?", u.tableName)
 	n, err := u.db.SelectInt(query, user.Email)
 	if err != nil {
 		return err
@@ -41,15 +52,7 @@ func (u *UserStore) Validate(user *models.UserModel) error {
 }
 
 func (u *UserStore) Authenticate(email string, password string) (*models.UserModel, error) {
-	query := "SELECT * FROM `users` WHERE `email`=? LIMIT 1"
-	item := &models.UserModel{}
-	err := u.db.SelectOne(item, query, email)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
+	item, err := u.ByEmail(email)
 	if err = bcrypt.CompareHashAndPassword([]byte(item.Password), []byte(password)); err != nil {
 		return nil, errors.New("invalid credentials")
 	}
@@ -67,23 +70,30 @@ func (u *UserStore) Authenticate(email string, password string) (*models.UserMod
 }
 
 func (u *UserStore) Create(user *models.UserModel) error {
+	user.Created = time.Now().Unix()
 	return u.db.Insert(user)
 }
 
 func (u *UserStore) Update(user *models.UserModel) (int64, error) {
+	user.Updated = time.Now().Unix()
 	return u.db.Update(user)
 }
 
-func (u *UserStore) Verify(code string) (bool, error) {
-	query := "UPDATE `users` SET `active`=1, `verification_code`='', `updated_at`=? WHERE `verification_code`=? LIMIT 1"
-	_, err := u.db.Exec(query, time.Now().Unix(), code)
+func (u *UserStore) Delete(model *models.UserModel) error {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (u *UserStore) selectOne(query string, args ...interface{}) (*models.UserModel, error) {
+	item := &models.UserModel{}
+	err := u.db.SelectOne(item, query, args...)
 	switch err {
 	case sql.ErrNoRows:
-		return false, nil
+		return nil, nil
 	case nil:
-		return true, nil
+		return item, nil
 	default:
-		return false, err
+		return nil, err
 	}
 }
 

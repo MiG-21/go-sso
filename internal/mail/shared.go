@@ -23,8 +23,16 @@ func SetupService(config *internal.Config, eventService *event.Service) SetupRes
 
 	dir := strings.TrimRight(config.Frontend.Path, "/") + "/template/email/"
 	layoutPath := dir + "layout.html"
-	verificationEmailPath := dir + "email_verification_code.html"
+
+	verificationEmailPath := dir + "verification_code.html"
 	verificationEmailTpl, err := template.New("layout").ParseFiles(verificationEmailPath, layoutPath)
+	if err != nil {
+		sr.Error = err
+		return sr
+	}
+
+	passwordRecoverEmailPath := dir + "password_recover.html"
+	passwordRecoverEmailTpl, err := template.New("layout").ParseFiles(passwordRecoverEmailPath, layoutPath)
 	if err != nil {
 		sr.Error = err
 		return sr
@@ -39,12 +47,15 @@ func SetupService(config *internal.Config, eventService *event.Service) SetupRes
 	}
 
 	service := &Service{
-		EmailFrom:            config.Smtp.SmtpUser,
-		sender:               sender,
-		verificationEmailTpl: verificationEmailTpl,
+		EmailFrom:               config.Smtp.SmtpUser,
+		sender:                  sender,
+		verificationEmailTpl:    verificationEmailTpl,
+		passwordRecoverEmailTpl: passwordRecoverEmailTpl,
 	}
 
-	eventService.AddListener("user_created", service.SendVerificationEmail)
+	eventService.AddListener(event.UserCreatedEvent, service.SendActivationEmail)
+	eventService.AddListener(event.PasswordRecoverEvent, service.SendPasswordRecoverEmail)
+
 	sr.EmailService = service
 
 	return sr

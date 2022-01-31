@@ -75,6 +75,12 @@ func SetupServer(p InitServerParams) *fiber.App {
 	app.Get("/logout", handlers.LogoutHandler(p.Sso, p.Validator))
 	app.Get("/verification", handlers.VerificationHandler(p.Config, p.Sso, p.Validator))
 	app.Get("/verified", handlers.VerifiedHandler())
+	passGroup := app.Group("password")
+	passGroup.Get("/recover", handlers.PasswordRecoverFormHandler())
+	passGroup.Post("/recover", handlers.PasswordRecoverHandler(p.Config, p.Sso, p.Validator, p.EventService))
+	passGroup.Get("/recover/send", handlers.PasswordRecoverSendHandler())
+	passGroup.Get("/change", handlers.PasswordChangeFormHandler(p.Config, p.Validator))
+	passGroup.Post("/change", handlers.PasswordChangeHandler(p.Sso, p.Validator))
 
 	// API routes
 	versionGroup := app.Group("v1")

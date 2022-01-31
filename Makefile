@@ -74,7 +74,7 @@ clean:
 	rm -rf $(BIN_DIR) .git-env vendor || true
 
 install_tools:
-	@for package in $$(grep '_ \"' third_party/tools.go | sed 's/_ //g' | sed 's/[^a-zA-Z0-9/.]//g'); do \
+	@for package in $$(grep '_ \"' tools/tools.go | sed 's/_ //g' | sed 's/[^a-zA-Z0-9/.]//g'); do \
 		echo "Installing package $${package} or skipping if already installed..."; \
 		go install $${package}; \
 	done

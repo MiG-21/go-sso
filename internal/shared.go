@@ -2,16 +2,17 @@ package internal
 
 import (
 	"fmt"
-	"github.com/MiG-21/go-sso/internal/event"
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
-	"go.uber.org/dig"
 	"log"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
+
+	"github.com/MiG-21/go-sso/internal/event"
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 )
 
 type (

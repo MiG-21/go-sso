@@ -44,3 +44,11 @@ func HandleValidation(errs error) []*ValidationError {
 	}
 	return errors
 }
+
+func ValidationErrorsToErrors(validationErrors []*ValidationError) []error {
+	var errs []error
+	for _, e := range validationErrors {
+		errs = append(errs, e)
+	}
+	return errs
+}

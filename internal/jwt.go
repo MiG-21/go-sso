@@ -14,7 +14,8 @@ type (
 	}
 
 	VerificationClaims struct {
-		Id string `json:"Id"`
+		Id     string `json:"id"`
+		Action string `json:"action"`
 		jwt.StandardClaims
 	}
 )
@@ -45,9 +46,10 @@ func GenSignInJWT(id int64, roles []string, p *rsa.PrivateKey, t int64) (string,
 	return token.SignedString(p)
 }
 
-func GenVerificationJWT(id string, p *rsa.PrivateKey, t int64) (string, error) {
+func GenVerificationJWT(id, action string, p *rsa.PrivateKey, t int64) (string, error) {
 	claims := VerificationClaims{
 		id,
+		action,
 		jwt.StandardClaims{
 			ExpiresAt: t,
 			Issuer:    "Login_Server",
